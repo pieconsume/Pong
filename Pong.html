@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html>
+ <head>
+  <title>Pong</title>
+  <style>
+   * { position: absolute; margin: 0px; border: none; background: none; padding: 0px; outline: none; }
+   div, input { border-style: solid; border-width: 2px; }
+   div { -webkit-touch-callout: none; -webkit-user-select: none; -khtml-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none; }
+   #settings > div { width: 50px; height: 20px; }
+   .textbox { border: none; top: 0px; right: 0px; width: 32px; height: 20px; background: #404040; text-align: right; text-wrap: nowrap; -moz-appearance: textfield; }
+   input::-webkit-outer-spin-button, input::-webkit-inner-spin-button { -webkit-appearance: none; }
+   #pong       { border-color: #303030; }
+   #pong:focus { border-color: #606060; }
+   </style>
+  </head>
+ <body style="background: #000000;">
+  <div id="settings" style="top: 10px; left: 10px; width: 54px;  height: 168px; background: #404040; border-color: #202020;">
+   <div id="restart" style="background: #802020; border-color: #401010; text-align: center; top: 0px;" onclick="init()">Reset</div>
+   <div id="score1"  style="background: #208020; border-color: #104010; text-align: center; top: 24px;">0</div>
+   <div id="score2"  style="background: #202080; border-color: #101040; text-align: center; top: 48px;">0</div>
+   <div id="width"   style="background: #404040; border-color: #282828; text-align: center; top: 72px;  text-align: left;">W: <input id="widthin"    class="textbox" type="number" value="600"/></div>
+   <div id="height"  style="background: #404040; border-color: #282828; text-align: center; top: 96px;  text-align: left;">H: <input id="heightin"   class="textbox" type="number" value="400"/></div>
+   <div id="pwidth"  style="background: #404040; border-color: #282828; text-align: center; top: 120px; text-align: left;">P: <input id="paddleszin" class="textbox" type="number" value="80"/></div>
+   <div id="ballsz"  style="background: #404040; border-color: #282828; text-align: center; top: 144px; text-align: left;">B: <input id="ballin"     class="textbox" type="number" value="10"/></div>
+   </div>
+  <div id="pong"     style="top: 10px; left: 78px; width: 800px; height: 400px; background: #101010;" tabindex="-1";>
+   <div id="paddle1" style="top: 10px; left:  10px;  width: 10px; height: 80px; background: #202020; border-color: #282828;"></div>
+   <div id="paddle2" style="top: 10px; right: 10px;  width: 10px; height: 80px; background: #202020; border-color: #282828;"></div>
+   <div id="ball"    style="width: 10px; height: 10px; background: #202020; border-color: #404040;"></div>
+   </div>
+  </body>
+ <script>
+  let tickinterval, width, height, paddlesz, ballsz, ballx, bally, paddle1y, paddle2y, velx, vely, passed;
+  let keys = { arrowup: false, arrowdown: false };
+  addEventListener("keydown", onkeydown);
+  addEventListener("keyup",   onkeyup);
+  pong.addEventListener("focus", () => { tickinterval = setInterval(tick, 32); });
+  pong.addEventListener("blur",  () => { clearInterval(tickinterval); });
+  init();
+  function init(){
+   score1.innerText = 0;
+   score2.innerText = 0;
+   width    = parseInt(widthin.value);    if (width < 100) { width = 100; }
+   height   = parseInt(heightin.value);   if (height < 100) { height = 100; }
+   paddlesz  = parseInt(paddleszin.value); if (paddlesz > height) { paddlesz = height - 4; }
+   ballsz   = parseInt(ballin.value); if (ballsz > height) { ballsz = height - 4; } if (ballsz > width - 60) { ballsz = width - 64; }
+   reset();}
+  function reset(){
+   passed = false;
+   ballx    = width  / 2 - ballsz/2 - 2;
+   bally    = height / 2 - ballsz/2 - 2;
+   paddle1y = height/2 - paddlesz/2 - 2;
+   paddle2y = height/2 - paddlesz/2 - 2;
+   pong.style.width = width + "px"; pong.style.height = height + "px";
+   paddle1.style.height = paddlesz + "px"; paddle2.style.height = paddlesz + "px";
+   ball.style.width = ballsz + "px"; ball.style.height = ballsz + "px";
+   velx = 4.0; vely = 3.0;
+   tick();}
+  function tick(){
+   if (keys.arrowup)   { paddle1y -= 4; }
+   if (keys.arrowdown) { paddle1y += 4; }
+   if (paddle2y+paddlesz/2 < bally) { paddle2y += 8; }
+   if (paddle2y+paddlesz/2 > bally) { paddle2y -= 8; }
+   if (paddle1y < 0)                  { paddle1y = 0; }
+   if (paddle1y > height-paddlesz-4)  { paddle1y = height - paddlesz - 4; }
+   if (passed && paddle1y < ballsz+4) { paddle1y = ballsz+4; }
+   if (passed && paddle1y > height-paddlesz-ballsz-8) { paddle1y = height-paddlesz-ballsz-8; }
+   if (paddle2y < 0)                  { paddle2y = 0; }
+   if (paddle2y > height-paddlesz-4)  { paddle2y = height - paddlesz - 4; }
+   if (passed && paddle2y < ballsz+4) { paddle2y = ballsz+4; }
+   ballx += velx;
+   bally += vely;
+   if (!passed && ballx < 26       && paddle1y-2 < bally+ballsz+2 && paddle1y+paddlesz+2 > bally-2) { velx *= (1.0+Math.random()/5); vely *= (1.0+Math.random()/5); velx = -velx; ballx = 26; }       else if (ballx < 26)       { passed = true; }
+   if (!passed && ballx > width-ballsz-28 && paddle2y-2 < bally+ballsz+2 && paddle2y+paddlesz+2 > bally-2) { velx *= (1.0+Math.random()/5); vely *= (1.0+Math.random()/5); velx = -velx; ballx = width-ballsz-28; } else if (ballx > width-ballsz-28) { passed = true; }
+   if (passed && ballx < 26       && paddle1y-2 < bally+ballsz+2 && paddle1y+paddlesz+2 > bally-2){
+    if ((bally-2 > paddle1y+paddlesz/2 && vely < 0) || (bally-2 < paddle1y+paddlesz/2 && vely > 0)){ vely = -vely; }
+    if (vely > 0) { bally += 4; } else { bally -= 4; }}
+   if (passed && ballx > width-ballsz-28 && paddle2y-2 < bally+ballsz+2 && paddle2y+paddlesz+2 > bally-2){
+    if ((bally-2 > paddle2y+paddlesz/4 && vely < 0) || (bally-2 < paddle2y+paddlesz/2 && vely > 0)){ vely = -vely; }
+    if (vely > 0) { bally += 4; } else { bally -= 4; }}
+   if (bally < 0)               { bally = 0;                vely = -vely; }
+   if (bally > height-ballsz-4) { bally =  height-ballsz-4; vely = -vely; }
+   if (ballx < 0)              { score2.innerText++; reset(); }
+   if (ballx > width-ballsz-4) { score1.innerText++; reset(); }
+   render();}
+  function render(){
+   paddle1.style.top = paddle1y + "px";
+   paddle2.style.top = paddle2y + "px";
+   ball.style.left = ballx + "px";
+   ball.style.top = bally + "px"; }
+  function onkeydown(e){
+   if      (e.code == "ArrowUp"   || e.code == "KeyW") { keys.arrowup   = true; }
+   else if (e.code == "ArrowDown" || e.code == "KeyS") { keys.arrowdown = true; } }
+  function onkeyup(e){
+   if      (e.code == "ArrowUp"   || e.code == "KeyW" ) { keys.arrowup   = false; }
+   else if (e.code == "ArrowDown" || e.code == "KeyS" ) { keys.arrowdown = false; } }
+  </script>
+ </html>
